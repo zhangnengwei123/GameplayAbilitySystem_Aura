@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Interaction/EnemyInterface.h"
 #include "GameFramework/PlayerController.h"
 #include "AuraPlayerController.generated.h"
 
@@ -10,6 +11,7 @@ class UInputMappingContext;
 class UInputAction;
 
 struct FInputActionValue;
+class IEnemyInterface;
 /**
  * 
  */
@@ -20,6 +22,9 @@ class AURA_API AAuraPlayerController : public APlayerController
 
 public:
 	AAuraPlayerController();
+
+	// 高亮显示敌人 需要每帧执行检查
+	virtual void PlayerTick(float DeltaTime) override;
 protected:
 	virtual void BeginPlay() override;
 	
@@ -36,4 +41,10 @@ private:
 	TObjectPtr<UInputAction> MoveAction;
 	
 	void Move(const FInputActionValue& InputActionVaule);
+
+	// 自定义鼠标跟踪方法
+	void CursorTrace();
+
+	IEnemyInterface* LastActor;
+	IEnemyInterface* ThisActor;
 };

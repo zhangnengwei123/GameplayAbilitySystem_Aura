@@ -14,6 +14,80 @@ AAuraPlayerController::AAuraPlayerController()
 	bReplicates = true;
 }
 
+void AAuraPlayerController::PlayerTick(float DeltaTime)
+{
+	Super::PlayerTick(DeltaTime);
+	CursorTrace();
+
+
+}
+
+
+void AAuraPlayerController::CursorTrace()
+{
+	// ÃüÖÐÎïÌå
+	FHitResult CursorHit;
+	GetHitResultUnderCursor(ECC_Visibility, false, CursorHit);
+	if (!CursorHit.bBlockingHit) return;
+	
+	LastActor = ThisActor;
+	ThisActor = Cast<IEnemyInterface>(CursorHit.GetActor());
+
+	/**
+	* Line trace from cursor.There are serval scenarios:
+	*  A. LastActor is null && ThisActor is null
+	*		- Do nothing
+	*  B. LastActor is null && ThisActor is valid
+	*		- Highlight ThisActor
+	*  C. LastActor is valid && ThisActor is null
+	*		- UnHighlight LastActor
+	*  D. Both actors are valid, but LastActor != ThisActor
+	*		- UnHighlight LastActor,And Highlight ThisActor
+	*  E. Both actors are valid, and LastActor == ThisActor
+	*		- Do nothing
+	* 
+	* 
+	*/
+	if (LastActor == nullptr)
+	{
+		if (ThisActor != nullptr)
+		{
+			// case B
+			ThisActor->HighlightActor();
+		}
+		else
+		{
+			// case A
+		}
+
+	}
+	else
+	{
+		if (ThisActor == nullptr)
+		{
+			// case C
+			LastActor->UnHighlightActor();
+		}
+		else
+		{
+			if (LastActor != ThisActor)
+			{
+				// case D
+				LastActor->UnHighlightActor();
+				ThisActor->HighlightActor();
+			}
+			else
+			{
+				// case E
+			}
+
+		}
+	}
+
+}
+
+
+
 void AAuraPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
@@ -65,3 +139,4 @@ void AAuraPlayerController::Move(const FInputActionValue& InputActionVaule)
 	}
 
 }
+
