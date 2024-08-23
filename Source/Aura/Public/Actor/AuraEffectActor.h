@@ -30,6 +30,8 @@ protected:
 	UPROPERTY(EditAnywhere,BlueprintReadOnly, Category = "Applied EffectS")
 	TSubclassOf<UGameplayEffect> InstantGameplayEffectClass;
 
-
+	// 持续的游戏效果
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Applied EffectS")
+	TSubclassOf<UGameplayEffect> DurationGameplayEffectClass;
 
 };
