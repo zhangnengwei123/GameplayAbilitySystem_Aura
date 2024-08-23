@@ -44,6 +44,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetWidgetControllerParams(const FWidgetControllerParams& WCParams);
 
+	virtual void BroadcastInitialValues();
+	virtual void BindCallbacksToDependencies();
+
+
 protected:
 
 	// 控制器关心下面四个类型的数据
