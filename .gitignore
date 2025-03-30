@@ -4,6 +4,9 @@ Intermediate
 Saved
 Build
 Plugins
+Content
+**/Assets
+**/.DS_Store
 
 .vscode
 .vs
