@@ -2,6 +2,7 @@
 
 
 #include "Character/AuraCharacterBase.h"
+#include "AbilitySystemComponent.h"
 
 // Sets default values
 AAuraCharacterBase::AAuraCharacterBase()
