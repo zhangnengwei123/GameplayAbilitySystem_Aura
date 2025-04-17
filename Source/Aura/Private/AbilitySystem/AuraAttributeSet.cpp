@@ -2,6 +2,9 @@
 
 
 #include "AbilitySystem/AuraAttributeSet.h"
+#include "GameplayEffectExtension.h"
+#include "Logging/LogMacros.h"
+
 #include "Net/UnrealNetwork.h"
 
 UAuraAttributeSet::UAuraAttributeSet()
@@ -19,6 +22,32 @@ void UAuraAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, MaxHealth, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, Mana, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, MaxMana, COND_None, REPNOTIFY_Always);
+}
+
+void UAuraAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
+{
+	Super::PostGameplayEffectExecute(Data);
+	
+	// 打印预览 这里可以获取到很多有用的信息
+	//if (Data.EvaluatedData.Attribute == GetHealthAttribute())
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("Health from GetHealth():%f"), GetHealth());
+	//	// 打印变化
+	//	UE_LOG(LogTemp, Warning, TEXT("Magnitude:%f"), Data.EvaluatedData.Magnitude);
+	//}
+
+	// 设置夹值
+	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
+	{
+		//GEngine->AddOnScreenDebugMessage(1, 8.f, FColor::Red, FString::Printf(TEXT("Health:%f"),GetHealth()));
+		SetHealth(FMath::Clamp(GetHealth(), 0, GetMaxHealth()));
+	}
+
+	if (Data.EvaluatedData.Attribute == GetManaAttribute())
+	{
+		SetMana(FMath::Clamp(GetMana(), 0, GetMaxMana()));
+	}
+	
 }
 
 void UAuraAttributeSet::OnRep_Health(const FGameplayAttributeData& OldHealth) const
