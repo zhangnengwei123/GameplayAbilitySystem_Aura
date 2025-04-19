@@ -23,10 +23,22 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 		AuraAttributeSet->GetHealthAttribute()
-	).AddUObject(this, &UOverlayWidgetController::HealthChanged);
+	).AddLambda(
+		[this](const FOnAttributeChangeData& Data)
+		{
+			OnHealthChanged.Broadcast(Data.NewValue);
+		}
+	);
+
+
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 		AuraAttributeSet->GetMaxHealthAttribute()
-	).AddUObject(this, &UOverlayWidgetController::MaxHealthChanged);
+	).AddLambda(
+		[this](const FOnAttributeChangeData& Data)
+		{
+			OnMaxHealthChanged.Broadcast(Data.NewValue);
+		}
+	);
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 		AuraAttributeSet->GetManaAttribute()
@@ -40,30 +52,19 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 		{
 			for (const FGameplayTag& GameplayTag : TagContainer)
 			{
-
 				FGameplayTag MessageTag = FGameplayTag::RequestGameplayTag(FName("Message"));
 				if (GameplayTag.MatchesTag(MessageTag))
 				{
 					// const FString GameplayTagString = GameplayTag.ToString();
 					// GEngine->AddOnScreenDebugMessage(-1, 8.0f, FColor::Blue, GameplayTagString);
 
-					const FUIWidgetRow* WidgetRow = GetDataTableRowByTag<FUIWidgetRow>(MessageWidgetDataTable, GameplayTag);
-					MessageWidgetRowDelegate.Broadcast(*WidgetRow);	
+					const FUIWidgetRow* WidgetRow = GetDataTableRowByTag<FUIWidgetRow>(
+						MessageWidgetDataTable, GameplayTag);
+					MessageWidgetRowDelegate.Broadcast(*WidgetRow);
 				}
-				
 			}
 		}
 	);
-}
-
-void UOverlayWidgetController::HealthChanged(const FOnAttributeChangeData& Data) const
-{
-	OnHealthChanged.Broadcast(Data.NewValue);
-}
-
-void UOverlayWidgetController::MaxHealthChanged(const FOnAttributeChangeData& Data) const
-{
-	OnMaxHealthChanged.Broadcast(Data.NewValue);
 }
 
 void UOverlayWidgetController::ManaChanged(const FOnAttributeChangeData& Data) const
