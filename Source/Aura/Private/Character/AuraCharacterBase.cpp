@@ -27,6 +27,20 @@ void AAuraCharacterBase::BeginPlay()
 	
 }
 
+void AAuraCharacterBase::InitializePrimaryAttributes() const
+{
+	check(IsValid(GetAbilitySystemComponent()))
+	check(DefaultPrimaryAttributesEffectClass);
+	const FGameplayEffectContextHandle GameplayEffectContextHandle =
+		GetAbilitySystemComponent()->MakeEffectContext();
+	const FGameplayEffectSpecHandle GameplayEffectSpecHandle =
+		GetAbilitySystemComponent()->MakeOutgoingSpec(
+			DefaultPrimaryAttributesEffectClass,1.0f, GameplayEffectContextHandle);
+	GetAbilitySystemComponent()->ApplyGameplayEffectSpecToTarget(
+		*GameplayEffectSpecHandle.Data.Get(),GetAbilitySystemComponent());
+	
+}
+
 void AAuraCharacterBase::InitAbilityActorInfo()
 {
 }
