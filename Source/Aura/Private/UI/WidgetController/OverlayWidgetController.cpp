@@ -40,8 +40,17 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 		{
 			for (const FGameplayTag& GameplayTag : TagContainer)
 			{
-				const FString GameplayTagString = GameplayTag.ToString();
-				GEngine->AddOnScreenDebugMessage(-1, 8.0f, FColor::Blue, GameplayTagString);
+
+				FGameplayTag MessageTag = FGameplayTag::RequestGameplayTag(FName("Message"));
+				if (GameplayTag.MatchesTag(MessageTag))
+				{
+					// const FString GameplayTagString = GameplayTag.ToString();
+					// GEngine->AddOnScreenDebugMessage(-1, 8.0f, FColor::Blue, GameplayTagString);
+
+					const FUIWidgetRow* WidgetRow = GetDataTableRowByTag<FUIWidgetRow>(MessageWidgetDataTable, GameplayTag);
+					MessageWidgetRowDelegate.Broadcast(*WidgetRow);	
+				}
+				
 			}
 		}
 	);
