@@ -7,12 +7,11 @@
 // Sets default values
 AAuraCharacterBase::AAuraCharacterBase()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 	Weapon = CreateDefaultSubobject<USkeletalMeshComponent>("Weapon");
-	Weapon->SetupAttachment(GetMesh(),FName("WeaponHandSocket"));
+	Weapon->SetupAttachment(GetMesh(), FName("WeaponHandSocket"));
 	Weapon->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
 }
 
 UAbilitySystemComponent* AAuraCharacterBase::GetAbilitySystemComponent() const
@@ -24,24 +23,27 @@ UAbilitySystemComponent* AAuraCharacterBase::GetAbilitySystemComponent() const
 void AAuraCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
-void AAuraCharacterBase::InitializePrimaryAttributes() const
+void AAuraCharacterBase::ApplyEffectToSelf(TSubclassOf<UGameplayEffect> EffectClass, float Level) const
 {
 	check(IsValid(GetAbilitySystemComponent()))
-	check(DefaultPrimaryAttributesEffectClass);
+	check(EffectClass);
 	const FGameplayEffectContextHandle GameplayEffectContextHandle =
 		GetAbilitySystemComponent()->MakeEffectContext();
 	const FGameplayEffectSpecHandle GameplayEffectSpecHandle =
 		GetAbilitySystemComponent()->MakeOutgoingSpec(
-			DefaultPrimaryAttributesEffectClass,1.0f, GameplayEffectContextHandle);
+			EffectClass, Level, GameplayEffectContextHandle);
 	GetAbilitySystemComponent()->ApplyGameplayEffectSpecToTarget(
-		*GameplayEffectSpecHandle.Data.Get(),GetAbilitySystemComponent());
-	
+		*GameplayEffectSpecHandle.Data.Get(), GetAbilitySystemComponent());
+}
+
+void AAuraCharacterBase::InitializeDefaultAttributes() const
+{
+	ApplyEffectToSelf(DefaultPrimaryAttributesEffectClass, 1.0f);
+	ApplyEffectToSelf(DefaultSecondaryAttributesEffectClass, 1.0f);
 }
 
 void AAuraCharacterBase::InitAbilityActorInfo()
 {
 }
-
