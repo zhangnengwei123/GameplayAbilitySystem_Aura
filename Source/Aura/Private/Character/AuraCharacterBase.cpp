@@ -45,6 +45,7 @@ void AAuraCharacterBase::InitializeDefaultAttributes() const
 {
 	ApplyEffectToSelf(DefaultPrimaryAttributesEffectClass, 1.0f);
 	ApplyEffectToSelf(DefaultSecondaryAttributesEffectClass, 1.0f);
+	ApplyEffectToSelf(DefaultVitalAttributesEffectClass, 1.0f);
 }
 
 void AAuraCharacterBase::InitAbilityActorInfo()
