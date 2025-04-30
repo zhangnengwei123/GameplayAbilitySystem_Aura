@@ -3,9 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "GameFramework/PlayerController.h"
 #include "AuraPlayerController.generated.h"
 
+class USplineComponent;
+class UAuraAbilitySystemComponent;
+class UAuraInputConfig;
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
@@ -27,11 +31,12 @@ protected:
 	virtual void BeginPlay() override;
 
 	virtual void SetupInputComponent() override;;
+
 private:
-	UPROPERTY(EditAnywhere,Category = Input, Category = Input)
+	UPROPERTY(EditAnywhere, Category = Input, Category = Input)
 	TObjectPtr<UInputMappingContext> AuraContext;
-	
-	UPROPERTY(EditAnywhere,Category = Input, Category = Input)
+
+	UPROPERTY(EditAnywhere, Category = Input, Category = Input)
 	TObjectPtr<UInputAction> MoveAction;
 
 	void Move(const FInputActionValue& InputActionValue);
@@ -40,5 +45,31 @@ private:
 
 	IEnemyInterface* LastActor;
 	IEnemyInterface* ThisActor;
-	
+
+	void AbilityInputTagPressed(FGameplayTag GameplayTag);
+	void AbilityInputTagReleased(FGameplayTag GameplayTag);
+	void AbilityInputTagHeld(FGameplayTag GameplayTag);
+
+
+	UPROPERTY(EditDefaultsOnly, Category = Input)
+	TObjectPtr<UAuraInputConfig> InputConfig;
+
+	UPROPERTY()
+	TObjectPtr<UAuraAbilitySystemComponent> AuraAbilitySystemComponent;
+
+	UAuraAbilitySystemComponent* GetAuraAbilitySystemComponent();
+
+	FVector CachedDestination = FVector::ZeroVector;
+	float FollowTime = 0.0f;
+	float ShortPressedThreshold = 0.5f;
+	bool bAutoRunning = false;
+	bool bTargeting = false;
+
+	UPROPERTY(EditDefaultsOnly, Category = Input)
+	float AutoRunAcceptanceRadius = 50.0f;
+
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<USplineComponent> Spline;
+
+	void AutoRun();
 };

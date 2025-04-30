@@ -13,7 +13,7 @@ class UAbilitySystemComponent;
 class UAttributeSet;
 
 UCLASS(Abstract)
-class AURA_API AAuraCharacterBase : public ACharacter, public IAbilitySystemInterface,public ICombatInterface
+class AURA_API AAuraCharacterBase : public ACharacter, public IAbilitySystemInterface, public ICombatInterface
 {
 	GENERATED_BODY()
 
@@ -37,19 +37,24 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UAttributeSet> AttributeSet;
 
-	UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="Attributes")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attributes")
 	TSubclassOf<UGameplayEffect> DefaultPrimaryAttributesEffectClass;
-	
-	UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="Attributes")
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attributes")
 	TSubclassOf<UGameplayEffect> DefaultSecondaryAttributesEffectClass;
 
-	void ApplyEffectToSelf(TSubclassOf<UGameplayEffect> EffectClass,float Level) const;
-	
+	void ApplyEffectToSelf(TSubclassOf<UGameplayEffect> EffectClass, float Level) const;
+
 	void InitializeDefaultAttributes() const;
-	
-	UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="Attributes")
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Attributes")
 	TSubclassOf<UGameplayEffect> DefaultVitalAttributesEffectClass;
+
+	void AddCharacterAbilities();
 
 private:
 	virtual void InitAbilityActorInfo();
+
+	UPROPERTY(EditAnywhere, Category="Abilities")
+	TArray<TSubclassOf<UGameplayAbility>> StartupAbilities;
 };
