@@ -26,4 +26,6 @@ public:
 	 * 建立接口从角色中获取等级 敌人和玩家都实现这个接口
 	 */
 	virtual int32 GetCharacterLevel();
+
+	virtual FVector GetCombatSocketLocation();
 };
