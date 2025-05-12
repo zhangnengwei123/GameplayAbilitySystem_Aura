@@ -3,11 +3,16 @@
 
 #include "AbilitySystem/AuraAttributeSet.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
 #include "AuraGameplayTags.h"
 #include "GameplayEffectExtension.h"
+#include "GameFramework/Character.h"
+#include "Interaction/CombatInterface.h"
+#include "Kismet/GameplayStatics.h"
 #include "Logging/LogMacros.h"
 
 #include "Net/UnrealNetwork.h"
+#include "Player/AuraPlayerController.h"
 
 UAuraAttributeSet::UAuraAttributeSet()
 {
@@ -70,6 +75,51 @@ void UAuraAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME_CONDITION_NOTIFY(UAuraAttributeSet, Mana, COND_None, REPNOTIFY_Always);
 }
 
+void UAuraAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData& Data, FEffectProperties& Props) const
+{
+	// 将数据设置给结构体
+
+	// Source = causer of effect, Target = target of the effect (owner of this AS) 
+
+	Props.EffectContextHandle = Data.EffectSpec.GetEffectContext();
+	// 获取游戏效果发起的源头
+	Props.SourceASC = Props.EffectContextHandle.GetOriginalInstigatorAbilitySystemComponent();
+
+	if (IsValid(Props.SourceASC) && Props.SourceASC->AbilityActorInfo.IsValid() && Props.SourceASC->AbilityActorInfo->
+		AvatarActor.IsValid())
+	{
+		Props.SourceAvatarActor = Props.SourceASC->AbilityActorInfo->AvatarActor.Get();
+
+		// 获取SourceController
+		Props.SourceController = Props.SourceASC->AbilityActorInfo->PlayerController.Get();
+		// 判断
+		// 如果能力组件中的控制器为空 那么就从Pawn里面获取控制器
+		if (Props.SourceController == nullptr && Props.SourceAvatarActor != nullptr)
+		{
+			if (const APawn* Pawn = Cast<APawn>(Props.SourceAvatarActor))
+			{
+				Props.SourceController = Pawn->GetController();
+			}
+		}
+
+		// 获取SourceCharacter
+		if (Props.SourceController)
+		{
+			Props.SourceCharacter = Cast<ACharacter>(Props.SourceController->GetPawn());
+		}
+	}
+
+	// 获取目标控制器
+	if (Data.Target.AbilityActorInfo.IsValid() && Data.Target.AbilityActorInfo->AvatarActor.IsValid())
+	{
+		Props.TargetAvatarActor = Data.Target.AbilityActorInfo->AvatarActor.Get();
+		Props.TargetController = Data.Target.AbilityActorInfo->PlayerController.Get();
+		Props.TargetCharacter = Cast<ACharacter>(Props.TargetAvatarActor);
+		Props.TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Props.TargetAvatarActor);
+	}
+}
+
+
 void UAuraAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
 {
 	Super::PostGameplayEffectExecute(Data);
@@ -81,7 +131,9 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectMo
 	//	// 打印变化
 	//	UE_LOG(LogTemp, Warning, TEXT("Magnitude:%f"), Data.EvaluatedData.Magnitude);
 	//}
-
+	FEffectProperties Properties;
+	SetEffectProperties(Data,Properties);
+	
 	// 设置夹值
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
@@ -107,12 +159,29 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectMo
 
 			const bool bFatal = NewHealth <= 0.f;
 
-			if (!bFatal)
+			if (bFatal)
+			{
+				if (ICombatInterface* CombatInterface = Cast<ICombatInterface>(Data.Target.GetAvatarActor()))
+				{
+					CombatInterface->Die();
+				}
+			}
+			else
 			{
 				UAbilitySystemComponent* ASC = GetOwningAbilitySystemComponentChecked();
 				FGameplayTagContainer TagContainer;
 				TagContainer.AddTag(FAuraGameplayTags::Get().HitReact);
 				ASC->TryActivateAbilitiesByTag(TagContainer);
+			}
+
+			if (Properties.TargetCharacter != Properties.SourceCharacter)
+			{
+				AAuraPlayerController* AuraPlayerController = Cast<AAuraPlayerController>(
+					UGameplayStatics::GetPlayerController(Properties.SourceCharacter, 0));
+				if (AuraPlayerController)
+				{
+					AuraPlayerController->ShowDamageNumber(LocalIncomingDamage, Properties.TargetCharacter);
+				}
 			}
 		}
 	}
