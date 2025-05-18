@@ -92,6 +92,10 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 
 	// if Blocked, halve the damage 
 	const bool bBlocked = FMath::RandRange(1, 100) < TargetBlockChance;
+
+	FGameplayEffectContextHandle ContextHandle = Spec.GetContext();
+	UAuraAbilitySystemLibrary::SetIsBlockedHit(ContextHandle, bBlocked);
+	
 	DamageAmount = bBlocked ? DamageAmount / 2.f : DamageAmount;
 
 
@@ -149,6 +153,9 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 	const float EffectiveCriticalHitChance = SourceCriticalChance - TargetCriticalResistance *
 		CriticalHitResistanceCoefficient;
 	const bool bCriticalHit = FMath::RandRange(0, 100) < EffectiveCriticalHitChance;
+	
+	UAuraAbilitySystemLibrary::SetIsCriticalHit(ContextHandle, bCriticalHit);
+	
 	DamageAmount = bCriticalHit ? DamageAmount * (2 + SourceCriticalDamage / 100.f) : DamageAmount;
 
 

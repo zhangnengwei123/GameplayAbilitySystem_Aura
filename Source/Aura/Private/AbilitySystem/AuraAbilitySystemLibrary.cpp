@@ -3,6 +3,7 @@
 
 #include "AbilitySystem/AuraAbilitySystemLibrary.h"
 
+#include "AuraAbilityTypes.h"
 #include "Game/AuraGameModeBase.h"
 #include "UI/WidgetController/AuraWidgetController.h"
 #include "Kismet/GameplayStatics.h"
@@ -95,10 +96,52 @@ void UAuraAbilitySystemLibrary::GiveStartupAbilities(const UObject* WorldContext
 UCharacterClassInfo* UAuraAbilitySystemLibrary::GetCharacterClassInfo(const UObject* WorldContextObject)
 {
 	const AAuraGameModeBase* AuraGameModeBase = Cast<AAuraGameModeBase>(
-			UGameplayStatics::GetGameMode(WorldContextObject));
+		UGameplayStatics::GetGameMode(WorldContextObject));
 	if (AuraGameModeBase == nullptr) return nullptr;
 
 
 	UCharacterClassInfo* CharacterClassInfo = AuraGameModeBase->CharacterClassInfo;
 	return CharacterClassInfo;
+}
+
+bool UAuraAbilitySystemLibrary::IsBlockedHit(const FGameplayEffectContextHandle& ContextHandle)
+{
+	if (const FAuraGameplayEffectContext* AuraGameplayEffectContext =
+		static_cast<const FAuraGameplayEffectContext*>(
+			ContextHandle.Get()))
+	{
+		return AuraGameplayEffectContext->IsBlockedHit();
+	}
+	return false;
+}
+
+bool UAuraAbilitySystemLibrary::IsCriticalHit(const FGameplayEffectContextHandle& ContextHandle)
+{
+	if (const FAuraGameplayEffectContext* AuraGameplayEffectContext =
+		static_cast<const FAuraGameplayEffectContext*>(
+			ContextHandle.Get()))
+	{
+		return AuraGameplayEffectContext->IsCriticalHit();
+	}
+	return false;
+}
+
+void UAuraAbilitySystemLibrary::SetIsBlockedHit(FGameplayEffectContextHandle& ContextHandle, bool bInIsBlockedHit)
+{
+	if (FAuraGameplayEffectContext* AuraGameplayEffectContext =
+	static_cast<FAuraGameplayEffectContext*>(
+		ContextHandle.Get()))
+	{
+		AuraGameplayEffectContext->SetBlockedHit(bInIsBlockedHit);
+	}
+}
+
+void UAuraAbilitySystemLibrary::SetIsCriticalHit(FGameplayEffectContextHandle& ContextHandle, bool bInIsCriticalHit)
+{
+	if (FAuraGameplayEffectContext* AuraGameplayEffectContext =
+	static_cast<FAuraGameplayEffectContext*>(
+		ContextHandle.Get()))
+	{
+		AuraGameplayEffectContext->SetCriticalHit(bInIsCriticalHit);
+	}
 }

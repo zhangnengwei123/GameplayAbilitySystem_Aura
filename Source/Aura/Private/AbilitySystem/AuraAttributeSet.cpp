@@ -6,6 +6,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AuraGameplayTags.h"
 #include "GameplayEffectExtension.h"
+#include "AbilitySystem/AuraAbilitySystemLibrary.h"
 #include "GameFramework/Character.h"
 #include "Interaction/CombatInterface.h"
 #include "Kismet/GameplayStatics.h"
@@ -132,8 +133,8 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectMo
 	//	UE_LOG(LogTemp, Warning, TEXT("Magnitude:%f"), Data.EvaluatedData.Magnitude);
 	//}
 	FEffectProperties Properties;
-	SetEffectProperties(Data,Properties);
-	
+	SetEffectProperties(Data, Properties);
+
 	// 设置夹值
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
@@ -174,15 +175,24 @@ void UAuraAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectMo
 				ASC->TryActivateAbilitiesByTag(TagContainer);
 			}
 
-			if (Properties.TargetCharacter != Properties.SourceCharacter)
-			{
-				AAuraPlayerController* AuraPlayerController = Cast<AAuraPlayerController>(
-					UGameplayStatics::GetPlayerController(Properties.SourceCharacter, 0));
-				if (AuraPlayerController)
-				{
-					AuraPlayerController->ShowDamageNumber(LocalIncomingDamage, Properties.TargetCharacter);
-				}
-			}
+			const bool bIsBlockedHit = UAuraAbilitySystemLibrary::IsBlockedHit(Properties.EffectContextHandle);
+			const bool bIsCriticalHit = UAuraAbilitySystemLibrary::IsCriticalHit(Properties.EffectContextHandle);
+
+			ShowFloatingText(Properties, LocalIncomingDamage, bIsBlockedHit, bIsCriticalHit);
+		}
+	}
+}
+
+void UAuraAttributeSet::ShowFloatingText(const FEffectProperties& Properties, float Damage,
+                                         bool bIsBlockedHit, bool bIsCriticalHit) const
+{
+	if (Properties.TargetCharacter != Properties.SourceCharacter)
+	{
+		AAuraPlayerController* AuraPlayerController = Cast<AAuraPlayerController>(
+			UGameplayStatics::GetPlayerController(Properties.SourceCharacter, 0));
+		if (AuraPlayerController)
+		{
+			AuraPlayerController->ShowDamageNumber(Damage, Properties.TargetCharacter,bIsBlockedHit, bIsCriticalHit);
 		}
 	}
 }
