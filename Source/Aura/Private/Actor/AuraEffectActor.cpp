@@ -10,19 +10,14 @@
 // Sets default values
 AAuraEffectActor::AAuraEffectActor()
 {
- 
 	PrimaryActorTick.bCanEverTick = false;
 	SetRootComponent(CreateDefaultSubobject<USceneComponent>("SceneRoot"));
-	
 }
-
 
 
 void AAuraEffectActor::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	
 }
 
 void AAuraEffectActor::ApplyEffectToTarget(AActor* TargetActor, TSubclassOf<UGameplayEffect> GameplayEffectClass)
@@ -33,23 +28,29 @@ void AAuraEffectActor::ApplyEffectToTarget(AActor* TargetActor, TSubclassOf<UGam
 	//{
 	//	ASCInterface->GetAbilitySystemComponent();
 	//}
+	if (TargetActor->ActorHasTag(FName("Enemy")) && !bApplyEffectToEnemies)
+	{
+		return;
+	}
 
 	// 还有一种使用能力系统函数的方式
-	UAbilitySystemComponent* TargetAbilitySystemComponent =  UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetActor);
+	UAbilitySystemComponent* TargetAbilitySystemComponent =
+		UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetActor);
 	if (TargetAbilitySystemComponent == nullptr) return;
 	check(GameplayEffectClass);
 	// 应用效果
 	FGameplayEffectContextHandle EffectContextHandle = TargetAbilitySystemComponent->MakeEffectContext();
 	EffectContextHandle.AddSourceObject(this);
 
-	const FGameplayEffectSpecHandle EffectSpecHandle = 
+	const FGameplayEffectSpecHandle EffectSpecHandle =
 		TargetAbilitySystemComponent->MakeOutgoingSpec(GameplayEffectClass, ActorLevel, EffectContextHandle);
-	
-	const FActiveGameplayEffectHandle ActiveGameplayEffectHandle = 
+
+	const FActiveGameplayEffectHandle ActiveGameplayEffectHandle =
 		TargetAbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
 
 	// 从GameplayEffectSpecHandle中获取GameplayEffect,然后再获取GameplayEffect的期间策略,判断是否是永久性的。
-	const bool bIsInfinite =  EffectSpecHandle.Data.Get()->Def.Get()->DurationPolicy == EGameplayEffectDurationType::Infinite;
+	const bool bIsInfinite = EffectSpecHandle.Data.Get()->Def.Get()->DurationPolicy ==
+		EGameplayEffectDurationType::Infinite;
 
 	// 满足条件： 永久效果 并且 需要在结束重叠时移除效果 
 	// 才需要添加到Map中
@@ -57,10 +58,20 @@ void AAuraEffectActor::ApplyEffectToTarget(AActor* TargetActor, TSubclassOf<UGam
 	{
 		ActiveEffectHandles.Add(ActiveGameplayEffectHandle, TargetAbilitySystemComponent);
 	}
+
+	if (!bIsInfinite)
+	{
+		Destroy();
+	}
 }
 
 void AAuraEffectActor::OnBeginOverlap(AActor* TargetActor)
 {
+	if (TargetActor->ActorHasTag(FName("Enemy")) && !bApplyEffectToEnemies)
+	{
+		return;
+	}
+
 	if (InstantEffectApplicationPolicy == EEffectApplicationPolicy::ApplyOnBeginOverlap)
 	{
 		ApplyEffectToTarget(TargetActor, InstantGameplayEffectClass);
@@ -79,6 +90,11 @@ void AAuraEffectActor::OnBeginOverlap(AActor* TargetActor)
 
 void AAuraEffectActor::OnEndOverlap(AActor* TargetActor)
 {
+	if (TargetActor->ActorHasTag(FName("Enemy")) && !bApplyEffectToEnemies)
+	{
+		return;
+	}
+
 	if (InstantEffectApplicationPolicy == EEffectApplicationPolicy::ApplyOnEndOverlap)
 	{
 		ApplyEffectToTarget(TargetActor, InstantGameplayEffectClass);
@@ -97,7 +113,8 @@ void AAuraEffectActor::OnEndOverlap(AActor* TargetActor)
 	// 移除效果
 	if (InfiniteEffectRemovalPolicy == EEffectRemovalPolicy::RemoveOnEndOverlap)
 	{
-		UAbilitySystemComponent* TargetAbilitySystemComponent = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetActor);
+		UAbilitySystemComponent* TargetAbilitySystemComponent =
+			UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetActor);
 		// 判断能力组件是否有效 无效直接返回
 		if (!IsValid(TargetAbilitySystemComponent)) return;
 
@@ -109,19 +126,14 @@ void AAuraEffectActor::OnEndOverlap(AActor* TargetActor)
 			// 但是不能在这里删除 因为在for循环遍历中操作删除会导致崩溃 使用一个变量接收删除掉的数据 在后面进行处理
 			if (TargetAbilitySystemComponent == HandlePair.Value)
 			{
-				TargetAbilitySystemComponent->RemoveActiveGameplayEffect(HandlePair.Key,1);
+				TargetAbilitySystemComponent->RemoveActiveGameplayEffect(HandlePair.Key, 1);
 				HandlesToRemove.Add(HandlePair.Key);
 			}
-
 		}
 
 		for (FActiveGameplayEffectHandle& Handle : HandlesToRemove)
 		{
 			ActiveEffectHandles.FindAndRemoveChecked(Handle);
 		}
-
-
 	}
 }
-
-

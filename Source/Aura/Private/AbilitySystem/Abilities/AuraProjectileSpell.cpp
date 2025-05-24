@@ -20,9 +20,7 @@ void UAuraProjectileSpell::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 void UAuraProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocation)
 {
 	// check if running on server
-	const bool bIsServer = GetAvatarActorFromActorInfo()->HasAuthority();
-	if (!bIsServer) return;
-
+	if (const bool bIsServer = GetAvatarActorFromActorInfo()->HasAuthority(); !bIsServer) return;
 
 	ICombatInterface* CombatInterface = Cast<ICombatInterface>(GetAvatarActorFromActorInfo());
 
@@ -47,29 +45,32 @@ void UAuraProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocati
 		const UAbilitySystemComponent* AbilitySystemComponent =
 			UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(
 				GetAvatarActorFromActorInfo());
-		 FGameplayEffectContextHandle EffectContextHandle = AbilitySystemComponent->MakeEffectContext();
+		FGameplayEffectContextHandle EffectContextHandle = AbilitySystemComponent->MakeEffectContext();
 
 		EffectContextHandle.SetAbility(this);
 		EffectContextHandle.AddSourceObject(Projectile);
 
 		TArray<TWeakObjectPtr<AActor>> Actors;
 		Actors.Add(Projectile);
-		
+
 		EffectContextHandle.AddActors(Actors);
 		FHitResult HitResult;
 		HitResult.Location = ProjectileTargetLocation;
 		EffectContextHandle.AddHitResult(HitResult);
-		
+
 		const FGameplayEffectSpecHandle DamageSpecHandle = AbilitySystemComponent->MakeOutgoingSpec(
 			DamageEffectClass, GetAbilityLevel(), EffectContextHandle);
 
 		const FAuraGameplayTags GameplayTags = FAuraGameplayTags::Get();
-		const float ScaledDamage = Damage.GetValueAtLevel(GetAbilityLevel());
+
+		for (auto& Pair : DamageTypes)
+		{
+			const float ScaledDamage = Pair.Value.GetValueAtLevel(GetAbilityLevel());
+			UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(DamageSpecHandle, Pair.Key,
+			                                                              ScaledDamage);
+		}
 
 		// GEngine->AddOnScreenDebugMessage(-1,10,FColor::Red,FString::Printf(TEXT("FireBolt Damage: %f"),ScaledDamage));
-
-		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(DamageSpecHandle, GameplayTags.Damage,
-		                                                              ScaledDamage);
 
 		Projectile->DamageEffectSpecHandle = DamageSpecHandle;
 
