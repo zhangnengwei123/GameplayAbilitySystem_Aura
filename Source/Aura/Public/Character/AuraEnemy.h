@@ -30,6 +30,9 @@ public:
 	/** Enemy Interface */
 	virtual void HighlightActor() override;
 	virtual void UnHighlightActor() override;
+
+	virtual void SetCombatTarget_Implementation(AActor* InCombatTarget) override;
+	virtual AActor* GetCombatTarget_Implementation() const override;
 	/** End Enemy Interface */
 
 	virtual int32 GetCharacterLevel() override;
@@ -40,21 +43,24 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnAttributeChangedSignature OnMaxHealthChanged;
 
-	void HitReactChanged(const FGameplayTag CallbackTag,int32 NewCount);
+	void HitReactChanged(const FGameplayTag CallbackTag, int32 NewCount);
 
-	UPROPERTY(BlueprintReadOnly,Category="Combat")
+	UPROPERTY(BlueprintReadOnly, Category="Combat")
 	bool bHitReacting = false;
 
-	UPROPERTY(BlueprintReadOnly,Category="Combat")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Combat")
 	float BaseWalkSpeed = 250.f;
 
 
 	virtual void Die() override;
-	
-	UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="Combat")
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Combat")
 	float LifeSpan = 5.f;
 
-	
+
+	UPROPERTY(BlueprintReadWrite, Category="Combat")
+	TObjectPtr<AActor> CombatTarget;
+
 protected:
 	/* Initialize OwnerActor and AvatarActor */
 	virtual void BeginPlay() override;
@@ -76,8 +82,7 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<AAuraAIController> AuraAIController;
-	
+
 private:
 	virtual void InitAbilityActorInfo() override;
-	
 };

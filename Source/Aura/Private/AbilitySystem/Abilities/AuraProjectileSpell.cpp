@@ -22,58 +22,55 @@ void UAuraProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocati
 	// check if running on server
 	if (const bool bIsServer = GetAvatarActorFromActorInfo()->HasAuthority(); !bIsServer) return;
 
-	ICombatInterface* CombatInterface = Cast<ICombatInterface>(GetAvatarActorFromActorInfo());
+	const FVector CombatSocketLocation = ICombatInterface::Execute_GetCombatSocketLocation(
+		GetAvatarActorFromActorInfo(),
+		FAuraGameplayTags::Get().Montage_Attack_Weapon);
+	FRotator Rotation = (ProjectileTargetLocation - CombatSocketLocation).Rotation();
+	Rotation.Pitch = 0.f;
 
-	if (CombatInterface)
+	FTransform SpawnTransform;
+	SpawnTransform.SetLocation(CombatSocketLocation);
+	SpawnTransform.SetRotation(Rotation.Quaternion());
+
+	AAuraProjectile* Projectile = GetWorld()->SpawnActorDeferred<AAuraProjectile>(
+		ProjectileClass,
+		SpawnTransform,
+		GetOwningActorFromActorInfo(),
+		Cast<APawn>(GetOwningActorFromActorInfo()),
+		ESpawnActorCollisionHandlingMethod::AlwaysSpawn
+	);
+
+	const UAbilitySystemComponent* AbilitySystemComponent =
+		UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(
+			GetAvatarActorFromActorInfo());
+	FGameplayEffectContextHandle EffectContextHandle = AbilitySystemComponent->MakeEffectContext();
+
+	EffectContextHandle.SetAbility(this);
+	EffectContextHandle.AddSourceObject(Projectile);
+
+	TArray<TWeakObjectPtr<AActor>> Actors;
+	Actors.Add(Projectile);
+
+	EffectContextHandle.AddActors(Actors);
+	FHitResult HitResult;
+	HitResult.Location = ProjectileTargetLocation;
+	EffectContextHandle.AddHitResult(HitResult);
+
+	const FGameplayEffectSpecHandle DamageSpecHandle = AbilitySystemComponent->MakeOutgoingSpec(
+		DamageEffectClass, GetAbilityLevel(), EffectContextHandle);
+
+	const FAuraGameplayTags GameplayTags = FAuraGameplayTags::Get();
+
+	for (auto& Pair : DamageTypes)
 	{
-		const FVector CombatSocketLocation = CombatInterface->GetCombatSocketLocation();
-		FRotator Rotation = (ProjectileTargetLocation - CombatSocketLocation).Rotation();
-		Rotation.Pitch = 0.f;
-
-		FTransform SpawnTransform;
-		SpawnTransform.SetLocation(CombatSocketLocation);
-		SpawnTransform.SetRotation(Rotation.Quaternion());
-
-		AAuraProjectile* Projectile = GetWorld()->SpawnActorDeferred<AAuraProjectile>(
-			ProjectileClass,
-			SpawnTransform,
-			GetOwningActorFromActorInfo(),
-			Cast<APawn>(GetOwningActorFromActorInfo()),
-			ESpawnActorCollisionHandlingMethod::AlwaysSpawn
-		);
-
-		const UAbilitySystemComponent* AbilitySystemComponent =
-			UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(
-				GetAvatarActorFromActorInfo());
-		FGameplayEffectContextHandle EffectContextHandle = AbilitySystemComponent->MakeEffectContext();
-
-		EffectContextHandle.SetAbility(this);
-		EffectContextHandle.AddSourceObject(Projectile);
-
-		TArray<TWeakObjectPtr<AActor>> Actors;
-		Actors.Add(Projectile);
-
-		EffectContextHandle.AddActors(Actors);
-		FHitResult HitResult;
-		HitResult.Location = ProjectileTargetLocation;
-		EffectContextHandle.AddHitResult(HitResult);
-
-		const FGameplayEffectSpecHandle DamageSpecHandle = AbilitySystemComponent->MakeOutgoingSpec(
-			DamageEffectClass, GetAbilityLevel(), EffectContextHandle);
-
-		const FAuraGameplayTags GameplayTags = FAuraGameplayTags::Get();
-
-		for (auto& Pair : DamageTypes)
-		{
-			const float ScaledDamage = Pair.Value.GetValueAtLevel(GetAbilityLevel());
-			UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(DamageSpecHandle, Pair.Key,
-			                                                              ScaledDamage);
-		}
-
-		// GEngine->AddOnScreenDebugMessage(-1,10,FColor::Red,FString::Printf(TEXT("FireBolt Damage: %f"),ScaledDamage));
-
-		Projectile->DamageEffectSpecHandle = DamageSpecHandle;
-
-		Projectile->FinishSpawning(SpawnTransform);
+		const float ScaledDamage = Pair.Value.GetValueAtLevel(GetAbilityLevel());
+		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(DamageSpecHandle, Pair.Key,
+		                                                              ScaledDamage);
 	}
+
+	// GEngine->AddOnScreenDebugMessage(-1,10,FColor::Red,FString::Printf(TEXT("FireBolt Damage: %f"),ScaledDamage));
+
+	Projectile->DamageEffectSpecHandle = DamageSpecHandle;
+
+	Projectile->FinishSpawning(SpawnTransform);
 }

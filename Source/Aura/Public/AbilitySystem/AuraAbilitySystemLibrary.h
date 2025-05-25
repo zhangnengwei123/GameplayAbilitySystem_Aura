@@ -31,7 +31,8 @@ public:
 	                                        float Level, UAbilitySystemComponent* AbilitySystemComponent);
 
 	static void GiveStartupAbilities(const UObject* WorldContextObject,
-	                                 UAbilitySystemComponent* AbilitySystemComponent);
+	                                 UAbilitySystemComponent* AbilitySystemComponent,
+	                                 ECharacterClass CharacterClass);
 
 
 	UFUNCTION(BlueprintCallable, Category = "AuraAbilitySystemLibrary|CharacterClassDefaults")
@@ -48,4 +49,11 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "AuraAbilitySystemLibrary|GameplayEffects")
 	static void SetIsCriticalHit(UPARAM(ref) FGameplayEffectContextHandle& ContextHandle, bool bInIsCriticalHit);
+
+	UFUNCTION(BlueprintCallable, Category = "AuraAbilitySystemLibrary|GameplayMechanics")
+	static void GetLivePlayerWithinRadius(const UObject* WorldContextObject,
+	                                      TArray<AActor*>& OutOverlappingActors,
+	                                      const TArray<AActor*>& ActorsToIgnore,
+	                                      float Radius,
+	                                      const FVector& SphereOrigin);
 };
