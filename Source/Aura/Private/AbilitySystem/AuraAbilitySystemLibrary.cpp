@@ -178,12 +178,26 @@ void UAuraAbilitySystemLibrary::GetLivePlayerWithinRadius(const UObject* WorldCo
 			{
 				if (!ICombatInterface::Execute_IsDead(OverlapResult.GetActor()))
 				{
-					if (OverlapResult.GetActor()->ActorHasTag(FName("Player")))
-					{
-						OutOverlappingActors.AddUnique(ICombatInterface::Execute_GetAvatar(OverlapResult.GetActor()));
-					}
+					// if (OverlapResult.GetActor()->ActorHasTag(FName("Player")))
+					// {
+					OutOverlappingActors.AddUnique(ICombatInterface::Execute_GetAvatar(OverlapResult.GetActor()));
+					// }
 				}
 			}
 		}
 	}
+}
+
+bool UAuraAbilitySystemLibrary::IsNotFriend(AActor* FirstActor, AActor* SecondActor)
+{
+	const bool bFirstIsPlayer = FirstActor->ActorHasTag(FName("Player"));
+	const bool bSecondIsPlayer = SecondActor->ActorHasTag(FName("Player"));
+	const bool bFirstIsEnemy = FirstActor->ActorHasTag(FName("Enemy"));
+	const bool bSecondIsEnemy = SecondActor->ActorHasTag(FName("Enemy"));
+
+	const bool BothArePlayers = bFirstIsPlayer && bSecondIsPlayer;
+	const bool BothAreEnemies = bFirstIsEnemy && bSecondIsEnemy;
+
+	const bool IsFriend = BothArePlayers || BothAreEnemies;
+	return !IsFriend;
 }
